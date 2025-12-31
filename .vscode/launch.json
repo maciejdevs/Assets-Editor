@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Assets Editor",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/Assets Editor/bin/Debug/net10.0-windows7.0/Assets Editor.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/Assets Editor",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
+            "name": "Launch Assets Editor (Release)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build (Release)",
+            "program": "${workspaceFolder}/Assets Editor/bin/Release/net10.0-windows7.0/Assets Editor.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/Assets Editor",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        }
+    ]
+}
