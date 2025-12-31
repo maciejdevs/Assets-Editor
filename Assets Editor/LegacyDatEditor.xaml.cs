@@ -104,11 +104,13 @@ namespace Assets_Editor
             SetThingViewLayout();
         }
 
-        private void UpdateFlagVisibility(Control control, string flagName) {
+        private void UpdateFlagVisibility(Control control, string flagName)
+        {
             control.Visibility = loadedVersion.HasFlag(flagName) ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void SetThingViewLayout() {
+        private void SetThingViewLayout()
+        {
             // ground + friction
             UpdateFlagVisibility(A_FlagGround, "Ground");
             UpdateFlagVisibility(A_FlagGroundSpeed, "Ground");
@@ -148,10 +150,12 @@ namespace Assets_Editor
 
             // versioned flag
             FlagInfo? displaced = loadedVersion.GetFlagInfo("Displaced");
-            if (displaced != null) {
+            if (displaced != null)
+            {
                 A_FlagShift.Visibility = Visibility.Visible;
 
-                switch(displaced.Version) {
+                switch (displaced.Version)
+                {
                     case 2:
                         // 1098 standard - offsets configurable
                         A_StandardShiftCoords.Visibility = Visibility.Visible;
@@ -168,7 +172,9 @@ namespace Assets_Editor
                         A_ExtendedShiftCoords.Visibility = Visibility.Collapsed;
                         break;
                 }
-            } else {
+            }
+            else
+            {
                 A_FlagShift.Visibility = Visibility.Collapsed;
                 A_StandardShiftCoords.Visibility = Visibility.Collapsed;
                 A_ExtendedShiftCoords.Visibility = Visibility.Collapsed;
@@ -398,10 +404,13 @@ namespace Assets_Editor
             CurrentObjectAppearance = ObjectAppearance.Clone();
             LoadCurrentObjectAppearances();
             isUpdatingFrame = true;
-            try {
+            try
+            {
                 SprGroupSlider.Value = 0;
                 ChangeGroupType(0);
-            } finally {
+            }
+            finally
+            {
                 isUpdatingFrame = false;
             }
         }
@@ -461,10 +470,13 @@ namespace Assets_Editor
         {
             isUpdatingFrame = true;
 
-            try {
+            try
+            {
                 SprFramesSlider.Minimum = -1;
                 SprFramesSlider.Value = -1;
-            } finally {
+            }
+            finally
+            {
                 isUpdatingFrame = false;
             }
 
@@ -519,11 +531,15 @@ namespace Assets_Editor
             A_FlagLenshelp.IsChecked = flags.Lenshelp != null;
 
             // select from dropdown only when the argument has valid value
-            if (flags.Lenshelp != null) {
+            if (flags.Lenshelp != null)
+            {
                 int lensHelpId = flags.Lenshelp.HasId ? (int)flags.Lenshelp.Id : -1;
-                if (lensHelpId >= 1100) {
+                if (lensHelpId >= 1100)
+                {
                     A_FlagLenshelpId.SelectedIndex = lensHelpId - 1100;
-                } else {
+                }
+                else
+                {
                     A_FlagLenshelpId.SelectedIndex = -1;
                 }
             }
@@ -610,10 +626,12 @@ namespace Assets_Editor
 
         private void InternalUpdateThingPreview()
         {
-            try {
+            try
+            {
                 var frameGroup = CurrentObjectAppearance.FrameGroup[(int)SprGroupSlider.Value];
                 var spriteInfo = frameGroup.SpriteInfo;
-                if (spriteInfo.PatternFrames > 1) {
+                if (spriteInfo.PatternFrames > 1)
+                {
                     SprPhaseMin.Value = (int)spriteInfo.Animation.SpritePhase[(int)SprFramesSlider.Value].DurationMin;
                     SprPhaseMax.Value = (int)spriteInfo.Animation.SpritePhase[(int)SprFramesSlider.Value].DurationMax;
                 }
@@ -623,46 +641,60 @@ namespace Assets_Editor
                 SpriteViewerGrid.ColumnDefinitions.Clear();
                 int gridWidth = 1;
                 int gridHeight = 1;
-                if (CurrentObjectAppearance.AppearanceType == APPEARANCE_TYPE.AppearanceOutfit) {
+                if (CurrentObjectAppearance.AppearanceType == APPEARANCE_TYPE.AppearanceOutfit)
+                {
                     gridWidth = (int)spriteInfo.PatternHeight;
                     gridHeight = (int)spriteInfo.PatternWidth;
-                } else {
+                }
+                else
+                {
                     gridWidth = (int)(spriteInfo.PatternHeight * spriteInfo.PatternY);
                     gridHeight = (int)(spriteInfo.PatternWidth * spriteInfo.PatternX);
                 }
-                for (int i = 0; i < gridWidth; i++) {
+                for (int i = 0; i < gridWidth; i++)
+                {
                     RowDefinition rowDef = new RowDefinition();
                     rowDef.Height = new GridLength(32);
                     SpriteViewerGrid.RowDefinitions.Add(rowDef);
                 }
-                for (int i = 0; i < gridHeight; i++) {
+                for (int i = 0; i < gridHeight; i++)
+                {
                     ColumnDefinition colDef = new ColumnDefinition();
                     colDef.Width = new GridLength(32);
                     SpriteViewerGrid.ColumnDefinitions.Add(colDef);
                 }
 
-                if (CurrentObjectAppearance.AppearanceType == APPEARANCE_TYPE.AppearanceOutfit) {
-                    if ((bool)SprBlendLayers.IsChecked == false) {
+                if (CurrentObjectAppearance.AppearanceType == APPEARANCE_TYPE.AppearanceOutfit)
+                {
+                    if ((bool)SprBlendLayers.IsChecked == false)
+                    {
                         int counter = 1;
                         int layer = SprBlendLayer.IsChecked == true ? (int)spriteInfo.PatternLayers - 1 : 0;
                         int mount = SprMount.IsChecked == true ? (int)spriteInfo.PatternZ - 1 : 0;
                         int addon = spriteInfo.PatternY > 1 ? (int)SprAddonSlider.Value : 0;
-                        for (int h = (int)spriteInfo.PatternHeight - 1; h >= 0; h--) {
-                            for (int w = (int)spriteInfo.PatternWidth - 1; w >= 0; w--) {
+                        for (int h = (int)spriteInfo.PatternHeight - 1; h >= 0; h--)
+                        {
+                            for (int w = (int)spriteInfo.PatternWidth - 1; w >= 0; w--)
+                            {
                                 int index = LegacyAppearance.GetSpriteIndex(frameGroup, w, h, layer, (int)Math.Min(CurrentSprDir, spriteInfo.PatternX - 1), addon, mount, (int)SprFramesSlider.Value);
                                 int spriteId = (int)spriteInfo.SpriteId[index];
                                 SetImageInGrid(SpriteViewerGrid, gridHeight, Utils.ResizeForUI(MainWindow.MainSprStorage.getSpriteStream((uint)spriteId)), counter, spriteId, index);
                                 counter++;
                             }
                         }
-                    } else {
+                    }
+                    else
+                    {
                         int counter = 1;
-                        for (int h = (int)spriteInfo.PatternHeight - 1; h >= 0; h--) {
-                            for (int w = (int)spriteInfo.PatternWidth - 1; w >= 0; w--) {
+                        for (int h = (int)spriteInfo.PatternHeight - 1; h >= 0; h--)
+                        {
+                            for (int w = (int)spriteInfo.PatternWidth - 1; w >= 0; w--)
+                            {
                                 int baseIndex = LegacyAppearance.GetSpriteIndex(frameGroup, w, h, 0, (int)Math.Min(CurrentSprDir, spriteInfo.PatternX - 1), 0, 0, (int)SprFramesSlider.Value);
                                 int baseSpriteId = (int)spriteInfo.SpriteId[baseIndex];
                                 System.Drawing.Bitmap baseBitmap = new(MainWindow.MainSprStorage.getSpriteStream((uint)baseSpriteId));
-                                if (spriteInfo.PatternLayers > 1) {
+                                if (spriteInfo.PatternLayers > 1)
+                                {
                                     int baseLayerIndex = LegacyAppearance.GetSpriteIndex(frameGroup, w, h, 1, (int)Math.Min(CurrentSprDir, spriteInfo.PatternX - 1), 0, 0, (int)SprFramesSlider.Value);
                                     int baseLayerSpriteId = (int)spriteInfo.SpriteId[baseLayerIndex];
                                     System.Drawing.Bitmap baseLayerBitmap = new(MainWindow.MainSprStorage.getSpriteStream((uint)baseLayerSpriteId));
@@ -675,11 +707,14 @@ namespace Assets_Editor
                                         SprLayerFeetPicker.SelectedColor.Value
                                     );
                                 }
-                                using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(baseBitmap)) {
+                                using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(baseBitmap))
+                                {
                                     g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceOver;
 
-                                    if ((bool)SprFullAddons.IsChecked) {
-                                        for (int x = 1; x <= (int)SprAddonSlider.Maximum; x++) {
+                                    if ((bool)SprFullAddons.IsChecked)
+                                    {
+                                        for (int x = 1; x <= (int)SprAddonSlider.Maximum; x++)
+                                        {
                                             int addonIndex = LegacyAppearance.GetSpriteIndex(frameGroup, w, h, 0, (int)Math.Min(CurrentSprDir, spriteInfo.PatternX - 1), x, 0, (int)SprFramesSlider.Value);
                                             int addonSpriteId = (int)spriteInfo.SpriteId[addonIndex];
                                             System.Drawing.Bitmap addonBitmap = new(MainWindow.MainSprStorage.getSpriteStream((uint)addonSpriteId));
@@ -708,14 +743,20 @@ namespace Assets_Editor
                             }
                         }
                     }
-                } else {
+                }
+                else
+                {
                     int counter = 1;
                     int layer = SprBlendLayer.IsChecked == true ? (int)spriteInfo.PatternLayers - 1 : 0;
                     int mount = SprMount.IsChecked == true ? (int)spriteInfo.PatternZ - 1 : 0;
-                    for (int ph = 0; ph < spriteInfo.PatternY; ph++) {
-                        for (int pw = 0; pw < spriteInfo.PatternX; pw++) {
-                            for (int h = (int)(spriteInfo.PatternHeight - 1); h >= 0; h--) {
-                                for (int w = (int)(spriteInfo.PatternWidth - 1); w >= 0; w--) {
+                    for (int ph = 0; ph < spriteInfo.PatternY; ph++)
+                    {
+                        for (int pw = 0; pw < spriteInfo.PatternX; pw++)
+                        {
+                            for (int h = (int)(spriteInfo.PatternHeight - 1); h >= 0; h--)
+                            {
+                                for (int w = (int)(spriteInfo.PatternWidth - 1); w >= 0; w--)
+                                {
                                     int tileid = (int)(ph * gridHeight * spriteInfo.PatternHeight + (spriteInfo.PatternHeight - 1 - h) * gridHeight + (pw * spriteInfo.PatternWidth) + (spriteInfo.PatternWidth - 1 - w) + 1);
                                     int index = LegacyAppearance.GetSpriteIndex(frameGroup, w, h, layer, pw, ph, mount, (int)SprFramesSlider.Value);
                                     int spriteId = (int)spriteInfo.SpriteId[index];
@@ -726,7 +767,9 @@ namespace Assets_Editor
                         }
                     }
                 }
-            } catch (Exception) {
+            }
+            catch (Exception)
+            {
                 MainWindow.Log("Unable to view appearance id " + CurrentObjectAppearance.Id + ", invalid texture ids.");
             }
         }
@@ -763,7 +806,8 @@ namespace Assets_Editor
             }
 
             string xml = $"<look type=\"{typeValue}\" head=\"{headValue}\" body=\"{bodyValue}\" legs=\"{legsValue}\" feet=\"{feetValue}\" corpse=\"{corpseValue}\"/>";
-            Dispatcher.Invoke(() => {
+            Dispatcher.Invoke(() =>
+            {
                 ClipboardManager.CopyText(xml, "xml", StatusBar);
             });
         }
@@ -1233,8 +1277,10 @@ namespace Assets_Editor
             else if ((flags.HasWearout))
                 flags.ClearWearout();
 
-            if ((bool)A_FlagWingsOffset.IsChecked) {
-                flags.WingsOffset = new() {
+            if ((bool)A_FlagWingsOffset.IsChecked)
+            {
+                flags.WingsOffset = new()
+                {
                     NorthX = (int)A_FlagWingsNorthX.Value,
                     NorthY = (int)A_FlagWingsNorthY.Value,
                     EastX = (int)A_FlagWingsEastX.Value,
@@ -1244,7 +1290,8 @@ namespace Assets_Editor
                     WestX = (int)A_FlagWingsWestX.Value,
                     WestY = (int)A_FlagWingsWestY.Value,
                 };
-            } else
+            }
+            else
                 flags.WingsOffset = null;
 
             if (ObjectMenu.SelectedIndex == 0)
@@ -1298,7 +1345,8 @@ namespace Assets_Editor
             CompileBox.IsEnabled = true;
         }
 
-        private void WritePresetToOtfi(string otfiPath, PresetSettings preset, string datFile, string sprFile, bool transparency) {
+        private void WritePresetToOtfi(string otfiPath, PresetSettings preset, string datFile, string sprFile, bool transparency)
+        {
             // create DatSpr node
             OTMLNode datspr = OTMLNode.Create("DatSpr", unique: true);
 
@@ -1314,7 +1362,8 @@ namespace Assets_Editor
 
             // optional combined name ("assets-name")
             string? baseName = Path.GetFileNameWithoutExtension(datFile);
-            if (baseName != null) {
+            if (baseName != null)
+            {
                 datspr.AddChild(OTMLNode.Create("assets-name", baseName));
             }
 
@@ -1329,39 +1378,53 @@ namespace Assets_Editor
             string sprfile = MainWindow._assetsPath + A_CompileName.Text + ".spr";
             string otfile = MainWindow._assetsPath + A_CompileName.Text + ".otfi";
 
-            try {
+            try
+            {
                 using var fileStream = new FileStream(datfile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
                 isDatEditable = true;
-            } catch (IOException) {
+            }
+            catch (IOException)
+            {
                 isDatEditable = false;
             }
 
-            try {
+            try
+            {
                 using var fileStream = new FileStream(sprfile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
                 isSprEditable = true;
-            } catch (IOException) {
+            }
+            catch (IOException)
+            {
                 isSprEditable = false;
             }
 
-            if (isDatEditable && isSprEditable) {
+            if (isDatEditable && isSprEditable)
+            {
                 LegacyAppearance.WriteLegacyDat(datfile, MainWindow.DatSignature, MainWindow.appearances, MainWindow.GetCurrentLoadedVersion());
-                var progress = new Progress<int>(percent => {
+                var progress = new Progress<int>(percent =>
+                {
                     LoadProgress.Value = percent;
                 });
                 CompileBox.IsEnabled = false;
 
                 await Sprite.CompileSpritesAsync(sprfile, MainWindow.MainSprStorage, (bool)C_Transparent.IsChecked, MainWindow.SprSignature, progress, MainWindow.GetCurrentPreset()?.Extended ?? true);
-            } else {
+            }
+            else
+            {
                 StatusBar.MessageQueue?.Enqueue($".dat or .spr file is being used by another process or is not accessible.", null, null, null, false, true, TimeSpan.FromSeconds(2));
             }
 
             // write otfi (optional)
-            try {
+            try
+            {
                 PresetSettings? preset = MainWindow.GetCurrentPreset();
-                if (preset != null) {
+                if (preset != null)
+                {
                     WritePresetToOtfi(otfile, preset, datfile, sprfile, (bool)C_Transparent.IsChecked);
                 }
-            } catch {
+            }
+            catch
+            {
                 // ...
             }
 
@@ -1388,13 +1451,13 @@ namespace Assets_Editor
                 {
                     foreach (var item in selectedItems)
                     {
-                        if (item.Image != null)
+                        try
                         {
-                            System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap((int)item.Image.Width, (int)item.Image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                            System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg);
-                            if(saveFileDialog.FilterIndex != 4)
-                                g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
                             System.Drawing.Image image = System.Drawing.Image.FromStream(MainWindow.MainSprStorage.getSpriteStream(item.Id));
+                            System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                            System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg);
+                            if (saveFileDialog.FilterIndex != 4)
+                                g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
                             g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
                             g.DrawImage(image, new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), System.Drawing.GraphicsUnit.Pixel);
                             g.Dispose();
@@ -1415,6 +1478,12 @@ namespace Assets_Editor
                                     break;
                             }
                             targetImg.Dispose();
+                            image.Dispose();
+                        }
+                        catch (Exception)
+                        {
+                            // Skip sprites that can't be loaded
+                            continue;
                         }
                     }
                 }
@@ -1423,7 +1492,8 @@ namespace Assets_Editor
 
         private void ImportSprite_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            OpenFileDialog openFileDialog = new() {
+            OpenFileDialog openFileDialog = new()
+            {
                 ClientGuid = Globals.GUID_LegacyDatEditor2,
                 Filter = "Bitmap Image (.bmp)|*.bmp|Gif Image (.gif)|*.gif|JPEG Image (.jpeg)|*.jpeg|Png Image (.png)|*.png",
                 Multiselect = true
@@ -1494,7 +1564,7 @@ namespace Assets_Editor
             ShowList data = (ShowList)SprListView.SelectedItem;
             if (data != null && data.Image != null)
             {
-                if(data.Id < MainWindow.SprLists.Count - 1)
+                if (data.Id < MainWindow.SprLists.Count - 1)
                 {
                     MainWindow.SprLists[(int)data.Id].Position = 0;
                     using System.Drawing.Bitmap emptyBitmap = new System.Drawing.Bitmap(32, 32, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -1511,7 +1581,7 @@ namespace Assets_Editor
                         MainWindow.appearances.Object.SelectMany(obj => obj.FrameGroup),
                         MainWindow.appearances.Effect.SelectMany(effect => effect.FrameGroup),
                         MainWindow.appearances.Missile.SelectMany(missile => missile.FrameGroup),
-    
+
                     };
 
                     foreach (var frameGroup in frameGroupCollections.SelectMany(collection => collection))
@@ -1543,7 +1613,8 @@ namespace Assets_Editor
         }
         private void ReplaceSprite_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            OpenFileDialog openFileDialog = new() {
+            OpenFileDialog openFileDialog = new()
+            {
                 Filter = "Bitmap Image (.bmp)|*.bmp|Gif Image (.gif)|*.gif|JPEG Image (.jpeg)|*.jpeg|Png Image (.png)|*.png",
                 ClientGuid = Globals.GUID_LegacyDatEditor3
             };
@@ -1601,11 +1672,11 @@ namespace Assets_Editor
                     else if (ObjectMenu.SelectedIndex == 3)
                         appearances.Add(MainWindow.appearances.Missile[(int)item.Id - 1]);
                 }
-                if(ObdDecoder.Export(appearances))
+                if (ObdDecoder.Export(appearances))
                     StatusBar.MessageQueue?.Enqueue($"Successfully exported objects.", null, null, null, false, true, TimeSpan.FromSeconds(2));
             }
         }
-        
+
         private void OTBEditor_Click(object sender, RoutedEventArgs e)
         {
             OTBEditor oTBEditor = new OTBEditor(this, true);
@@ -1628,7 +1699,8 @@ namespace Assets_Editor
                 if (ObjectMenu.SelectedIndex is not >= 0 and <= 3)
                     return;
 
-                var (group, targetList) = ObjectMenu.SelectedIndex switch {
+                var (group, targetList) = ObjectMenu.SelectedIndex switch
+                {
                     0 => (MainWindow.appearances?.Outfit, ThingsOutfit),
                     1 => (MainWindow.appearances?.Object, ThingsItem),
                     2 => (MainWindow.appearances?.Effect, ThingsEffect),
@@ -1640,7 +1712,8 @@ namespace Assets_Editor
                     return;
 
                 uint newId = (uint)group.Max(a => a.Id) + 1;
-                foreach (var item in selectedItems) {
+                foreach (var item in selectedItems)
+                {
                     var origItem = group.First(o => o.Id == item.Id);
                     var clonedItem = origItem.Clone();
                     clonedItem.Id = newId++;
@@ -1661,7 +1734,8 @@ namespace Assets_Editor
                 ObjListView.SelectedItem = ObjListView.Items[^1];
 
                 // scroll to the duplicated item
-                Dispatcher.BeginInvoke(new Action(() => {
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
                     ObjListView.ScrollIntoView(ObjListView.Items[^1]);
                 }), System.Windows.Threading.DispatcherPriority.Background);
 
@@ -1675,7 +1749,8 @@ namespace Assets_Editor
             searchWindow.Show();
         }
 
-        private void ObjListView_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
+        private void ObjListView_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
             // C# 9.0: listView = sender (if null: return)
             if (sender is not ListView listView) return;
 
@@ -1684,10 +1759,13 @@ namespace Assets_Editor
             while (hit != null && hit is not ListViewItem)
                 hit = VisualTreeHelper.GetParent(hit);
 
-            if (hit is ListViewItem item) {
+            if (hit is ListViewItem item)
+            {
                 var showList = (ShowList)listView.ItemContainerGenerator.ItemFromContainer(item);
-                if (showList != null) {
-                    Dispatcher.Invoke(() => {
+                if (showList != null)
+                {
+                    Dispatcher.Invoke(() =>
+                    {
                         ClipboardManager.CopyText(showList.Id.ToString(), "Object ID", StatusBar);
                     });
                 }
@@ -1696,7 +1774,7 @@ namespace Assets_Editor
 
         private void DeleteObject_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if(ObjListView.SelectedIndex == ObjListView.Items.Count - 1)
+            if (ObjListView.SelectedIndex == ObjListView.Items.Count - 1)
             {
                 if (ObjectMenu.SelectedIndex == 0)
                 {
@@ -1720,7 +1798,8 @@ namespace Assets_Editor
                     ThingsMissile.Remove((ShowList)ObjListView.SelectedItem);
 
                 }
-            }else
+            }
+            else
             {
                 Appearance selectedObject = new Appearance();
 
@@ -1746,7 +1825,8 @@ namespace Assets_Editor
 
                 selectedObject.Flags = new AppearanceFlags();
 
-                FrameGroup frameGroup = new() {
+                FrameGroup frameGroup = new()
+                {
                     SpriteInfo = new(),
                     FixedFrameGroup = FIXED_FRAME_GROUP.OutfitIdle
                 };
@@ -1775,11 +1855,13 @@ namespace Assets_Editor
 
         private void NewObject_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            Appearance newObject = new() {
+            Appearance newObject = new()
+            {
                 Flags = new()
             };
 
-            FrameGroup frameGroup = new() {
+            FrameGroup frameGroup = new()
+            {
                 SpriteInfo = new(),
                 FixedFrameGroup = FIXED_FRAME_GROUP.OutfitIdle
             };
@@ -1868,12 +1950,15 @@ namespace Assets_Editor
         public void AnimateSelectedListItem(ShowList showList)
         {
             // Find the ListViewItem for the selected item
-            try {
+            try
+            {
                 var listViewItem = ObjListView.ItemContainerGenerator.ContainerFromItem(showList) as ListViewItem;
-                if (listViewItem != null) {
+                if (listViewItem != null)
+                {
                     // Find the Image control within the ListViewItem
                     var imageControl = Utils.FindVisualChild<Image>(listViewItem);
-                    if (imageControl != null) {
+                    if (imageControl != null)
+                    {
                         showList.Images.Clear();
 
                         Appearance appearance = null;
@@ -1887,7 +1972,8 @@ namespace Assets_Editor
                         else if (ObjectMenu.SelectedIndex == 3)
                             appearance = MainWindow.appearances.Missile.FirstOrDefault(o => o.Id == showList.Id);
 
-                        for (int i = 0; i < appearance.FrameGroup[0].SpriteInfo.PatternFrames; i++) {
+                        for (int i = 0; i < appearance.FrameGroup[0].SpriteInfo.PatternFrames; i++)
+                        {
                             BitmapImage imageFrame = Utils.ResizeForUI(LegacyAppearance.GetObjectImage(appearance, MainWindow.MainSprStorage, i));
                             showList.Images.Add(imageFrame);
                         }
@@ -1895,7 +1981,9 @@ namespace Assets_Editor
                         showList.StartAnimation();
                     }
                 }
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 MainWindow.Log(e.Message, "Error");
             }
         }
@@ -1956,12 +2044,14 @@ namespace Assets_Editor
             MainWindow.logView.Show();
         }
 
-        private void OpenLuaWindow_Click(object sender, RoutedEventArgs e) {
+        private void OpenLuaWindow_Click(object sender, RoutedEventArgs e)
+        {
             LuaWindow luaWindow = new();
             luaWindow.Show();
         }
 
-        private void ResetZoom_Click(object sender, RoutedEventArgs e) {
+        private void ResetZoom_Click(object sender, RoutedEventArgs e)
+        {
             ZoomSlider.Value = 1;
         }
     }
