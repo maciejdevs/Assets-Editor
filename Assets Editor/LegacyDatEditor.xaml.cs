@@ -1441,7 +1441,8 @@ namespace Assets_Editor
             List<ShowList> selectedItems = SprListView.SelectedItems.Cast<ShowList>().ToList();
             if (selectedItems.Any())
             {
-                // Show format selection dialog
+                // Show format selection dialog for sprites
+                ExportFormatDialogHost.Tag = "sprite";
                 ExportFormatDialogHost.IsOpen = true;
             }
         }
@@ -1450,10 +1451,7 @@ namespace Assets_Editor
         {
             ExportFormatDialogHost.IsOpen = false;
 
-            List<ShowList> selectedItems = SprListView.SelectedItems.Cast<ShowList>().ToList();
-            if (!selectedItems.Any())
-                return;
-
+            bool isSprite = ExportFormatDialogHost.Tag?.ToString() == "sprite";
             bool usePngTransparent = ExportPngRadio.IsChecked == true;
             string filter = usePngTransparent ? "Png Image (.png)|*.png" : "Bitmap Image (.bmp)|*.bmp";
             string extension = usePngTransparent ? ".png" : ".bmp";
@@ -1467,46 +1465,144 @@ namespace Assets_Editor
 
             if (saveFileDialog.ShowDialog() == true)
             {
+                string directoryPath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);
                 int exportedCount = 0;
-                foreach (var item in selectedItems)
+
+                if (isSprite)
                 {
-                    try
+                    // Export sprites
+                    List<ShowList> selectedItems = SprListView.SelectedItems.Cast<ShowList>().ToList();
+                    foreach (var item in selectedItems)
                     {
-                        System.Drawing.Image image = System.Drawing.Image.FromStream(MainWindow.MainSprStorage.getSpriteStream(item.Id));
-                        System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                        System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg);
+                        try
+                        {
+                            System.Drawing.Image image = System.Drawing.Image.FromStream(MainWindow.MainSprStorage.getSpriteStream(item.Id));
+                            System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                            System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg);
 
-                        if (!usePngTransparent)
-                            g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
+                            if (!usePngTransparent)
+                                g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
 
-                        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                        g.DrawImage(image, new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), System.Drawing.GraphicsUnit.Pixel);
-                        g.Dispose();
+                            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                            g.DrawImage(image, new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), System.Drawing.GraphicsUnit.Pixel);
+                            g.Dispose();
 
-                        string directoryPath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);
-                        string outputPath = directoryPath + "\\" + item.Id.ToString() + extension;
+                            string outputPath = directoryPath + "\\" + item.Id.ToString() + extension;
 
-                        if (usePngTransparent)
-                            targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Png);
-                        else
-                            targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Bmp);
+                            if (usePngTransparent)
+                                targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Png);
+                            else
+                                targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Bmp);
 
-                        targetImg.Dispose();
-                        image.Dispose();
-                        exportedCount++;
+                            targetImg.Dispose();
+                            image.Dispose();
+                            exportedCount++;
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
                     }
-                    catch (Exception)
-                    {
-                        // Skip sprites that can't be loaded
-                        continue;
-                    }
-                }
-
-                if (exportedCount > 0)
-                {
                     StatusBar.MessageQueue?.Enqueue($"Successfully exported {exportedCount} sprite(s) as {(usePngTransparent ? "PNG" : "BMP")}.", null, null, null, false, true, TimeSpan.FromSeconds(2));
                 }
+                else
+                {
+                    // Export objects
+                    List<ShowList> selectedItems = ObjListView.SelectedItems.Cast<ShowList>().ToList();
+                    foreach (var item in selectedItems)
+                    {
+                        try
+                        {
+                            Appearance appearance = null;
+                            uint objectId = item.Id;
+
+                            if (ObjectMenu.SelectedIndex == 0)
+                                appearance = MainWindow.appearances.Outfit[(int)item.Id - 1];
+                            else if (ObjectMenu.SelectedIndex == 1)
+                                appearance = MainWindow.appearances.Object[(int)item.Id - 100];
+                            else if (ObjectMenu.SelectedIndex == 2)
+                                appearance = MainWindow.appearances.Effect[(int)item.Id - 1];
+                            else if (ObjectMenu.SelectedIndex == 3)
+                                appearance = MainWindow.appearances.Missile[(int)item.Id - 1];
+
+                            if (appearance != null)
+                            {
+                                System.Drawing.Bitmap renderedBitmap = RenderObjectAppearance(appearance);
+                                System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(renderedBitmap.Width, renderedBitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+                                using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg))
+                                {
+                                    if (!usePngTransparent)
+                                        g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
+
+                                    g.DrawImage(renderedBitmap, 0, 0);
+                                }
+
+                                string outputPath = directoryPath + "\\" + objectId.ToString() + extension;
+
+                                if (usePngTransparent)
+                                    targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Png);
+                                else
+                                    targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Bmp);
+
+                                targetImg.Dispose();
+                                renderedBitmap.Dispose();
+                                exportedCount++;
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            continue;
+                        }
+                    }
+                    StatusBar.MessageQueue?.Enqueue($"Successfully exported {exportedCount} object(s) as {(usePngTransparent ? "PNG" : "BMP")}.", null, null, null, false, true, TimeSpan.FromSeconds(2));
+                }
             }
+        }
+
+        private System.Drawing.Bitmap RenderObjectAppearance(Appearance appearance, int frame = 0, int direction = 2)
+        {
+            var frameGroup = appearance.FrameGroup[0];
+            var spriteInfo = frameGroup.SpriteInfo;
+
+            int width = (int)(spriteInfo.PatternWidth * spriteInfo.PatternX * 32);
+            int height = (int)(spriteInfo.PatternHeight * spriteInfo.PatternY * 32);
+
+            System.Drawing.Bitmap resultBitmap = new System.Drawing.Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(resultBitmap))
+            {
+                g.Clear(System.Drawing.Color.Transparent);
+
+                for (int ph = 0; ph < spriteInfo.PatternY; ph++)
+                {
+                    for (int pw = 0; pw < spriteInfo.PatternX; pw++)
+                    {
+                        for (int h = 0; h < spriteInfo.PatternHeight; h++)
+                        {
+                            for (int w = 0; w < spriteInfo.PatternWidth; w++)
+                            {
+                                int index = LegacyAppearance.GetSpriteIndex(frameGroup, w, h, 0, pw, ph, 0, frame);
+                                if (index < spriteInfo.SpriteId.Count)
+                                {
+                                    int spriteId = (int)spriteInfo.SpriteId[index];
+                                    try
+                                    {
+                                        System.Drawing.Image spriteImage = System.Drawing.Image.FromStream(MainWindow.MainSprStorage.getSpriteStream((uint)spriteId));
+                                        int x = (int)((spriteInfo.PatternWidth - 1 - w + pw * spriteInfo.PatternWidth) * 32);
+                                        int y = (int)((spriteInfo.PatternHeight - 1 - h + ph * spriteInfo.PatternHeight) * 32);
+                                        g.DrawImage(spriteImage, x, y, 32, 32);
+                                        spriteImage.Dispose();
+                                    }
+                                    catch { }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return resultBitmap;
         }
 
         private void ImportSprite_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -1674,25 +1770,12 @@ namespace Assets_Editor
         }
         private void ExportObject_PreviewMouseLeftButtonDown(object sender, RoutedEventArgs e)
         {
-
             List<ShowList> selectedItems = ObjListView.SelectedItems.Cast<ShowList>().ToList();
             if (selectedItems.Any())
             {
-                ObjListViewSelectedIndex.Value = (int)selectedItems.Last().Id;
-                List<Appearance> appearances = new List<Appearance>();
-                foreach (var item in selectedItems)
-                {
-                    if (ObjectMenu.SelectedIndex == 0)
-                        appearances.Add(MainWindow.appearances.Outfit[(int)item.Id - 1]);
-                    else if (ObjectMenu.SelectedIndex == 1)
-                        appearances.Add(MainWindow.appearances.Object[(int)item.Id - 100]);
-                    else if (ObjectMenu.SelectedIndex == 2)
-                        appearances.Add(MainWindow.appearances.Effect[(int)item.Id - 1]);
-                    else if (ObjectMenu.SelectedIndex == 3)
-                        appearances.Add(MainWindow.appearances.Missile[(int)item.Id - 1]);
-                }
-                if (ObdDecoder.Export(appearances))
-                    StatusBar.MessageQueue?.Enqueue($"Successfully exported objects.", null, null, null, false, true, TimeSpan.FromSeconds(2));
+                // Show format selection dialog for objects
+                ExportFormatDialogHost.Tag = "object";
+                ExportFormatDialogHost.IsOpen = true;
             }
         }
 
