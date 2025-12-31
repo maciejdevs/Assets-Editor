@@ -15,7 +15,28 @@
         <local:BooleanInverter x:Key="BooleanInverter"/>
     </Window.Resources>
     <Grid x:Name="MainContent" HorizontalAlignment="Center" VerticalAlignment="Stretch" IsHitTestVisible="{Binding ElementName=ComppileDialogHost, Path=IsOpen, Mode=OneWay, Converter={StaticResource BooleanInverter}}">
-        <materialDesign:DialogHost Grid.Row="1" x:Name="ComppileDialogHost" OverlayBackground="Gray" >
+        <materialDesign:DialogHost Grid.Row="1" x:Name="ExportFormatDialogHost" OverlayBackground="Gray" >
+            <materialDesign:DialogHost.DialogContent>
+                <GroupBox Header="Export Format" Width="320">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="60"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="Choose the export format for selected sprites:" TextWrapping="Wrap" Margin="10,10,10,15"/>
+                        <StackPanel Grid.Row="1" Margin="10,0,10,10">
+                            <RadioButton x:Name="ExportPngRadio" Content="PNG with transparent background" IsChecked="True" Margin="0,5"/>
+                            <RadioButton x:Name="ExportBmpRadio" Content="BMP with pink background" Margin="0,5"/>
+                        </StackPanel>
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Button Click="ExportFormatConfirm" Content="Export" Width="100" Margin="0,0,20,0"/>
+                            <Button Command="{x:Static materialDesign:DialogHost.CloseDialogCommand}" Content="Cancel" Width="100"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+            </materialDesign:DialogHost.DialogContent>
+            <materialDesign:DialogHost x:Name="ComppileDialogHost" OverlayBackground="Gray" >
             <materialDesign:DialogHost.DialogContent>
                 <GroupBox x:Name="CompileBox" Header="Compile Client" Width="300">
                     <Grid >
@@ -35,6 +56,7 @@
                     </Grid>
                 </GroupBox>
             </materialDesign:DialogHost.DialogContent>
+        </materialDesign:DialogHost>
         </materialDesign:DialogHost>
         <Grid HorizontalAlignment="Center" VerticalAlignment="Stretch">
             <Grid.RowDefinitions>

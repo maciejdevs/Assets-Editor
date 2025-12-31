@@ -1441,51 +1441,70 @@ namespace Assets_Editor
             List<ShowList> selectedItems = SprListView.SelectedItems.Cast<ShowList>().ToList();
             if (selectedItems.Any())
             {
-                SaveFileDialog saveFileDialog = new()
+                // Show format selection dialog
+                ExportFormatDialogHost.IsOpen = true;
+            }
+        }
+
+        private void ExportFormatConfirm(object sender, RoutedEventArgs e)
+        {
+            ExportFormatDialogHost.IsOpen = false;
+
+            List<ShowList> selectedItems = SprListView.SelectedItems.Cast<ShowList>().ToList();
+            if (!selectedItems.Any())
+                return;
+
+            bool usePngTransparent = ExportPngRadio.IsChecked == true;
+            string filter = usePngTransparent ? "Png Image (.png)|*.png" : "Bitmap Image (.bmp)|*.bmp";
+            string extension = usePngTransparent ? ".png" : ".bmp";
+
+            SaveFileDialog saveFileDialog = new()
+            {
+                Filter = filter,
+                FileName = " ",
+                ClientGuid = Globals.GUID_LegacyDatEditor1
+            };
+
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                int exportedCount = 0;
+                foreach (var item in selectedItems)
                 {
-                    Filter = "Bitmap Image (.bmp)|*.bmp|Gif Image (.gif)|*.gif|JPEG Image (.jpeg)|*.jpeg|Png Image (.png)|*.png",
-                    FileName = " ",
-                    ClientGuid = Globals.GUID_LegacyDatEditor1
-                };
-                if (saveFileDialog.ShowDialog() == true)
-                {
-                    foreach (var item in selectedItems)
+                    try
                     {
-                        try
-                        {
-                            System.Drawing.Image image = System.Drawing.Image.FromStream(MainWindow.MainSprStorage.getSpriteStream(item.Id));
-                            System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                            System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg);
-                            if (saveFileDialog.FilterIndex != 4)
-                                g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
-                            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                            g.DrawImage(image, new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), System.Drawing.GraphicsUnit.Pixel);
-                            g.Dispose();
-                            string directoryPath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);
-                            switch (saveFileDialog.FilterIndex)
-                            {
-                                case 1:
-                                    targetImg.Save(directoryPath + "\\" + item.Id.ToString() + ".bmp", System.Drawing.Imaging.ImageFormat.Bmp);
-                                    break;
-                                case 2:
-                                    targetImg.Save(directoryPath + "\\" + item.Id.ToString() + ".gif", System.Drawing.Imaging.ImageFormat.Gif);
-                                    break;
-                                case 3:
-                                    targetImg.Save(directoryPath + "\\" + item.Id.ToString() + ".jpg", System.Drawing.Imaging.ImageFormat.Jpeg);
-                                    break;
-                                case 4:
-                                    targetImg.Save(directoryPath + "\\" + item.Id.ToString() + ".png", System.Drawing.Imaging.ImageFormat.Png);
-                                    break;
-                            }
-                            targetImg.Dispose();
-                            image.Dispose();
-                        }
-                        catch (Exception)
-                        {
-                            // Skip sprites that can't be loaded
-                            continue;
-                        }
+                        System.Drawing.Image image = System.Drawing.Image.FromStream(MainWindow.MainSprStorage.getSpriteStream(item.Id));
+                        System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                        System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg);
+
+                        if (!usePngTransparent)
+                            g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
+
+                        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                        g.DrawImage(image, new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), System.Drawing.GraphicsUnit.Pixel);
+                        g.Dispose();
+
+                        string directoryPath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);
+                        string outputPath = directoryPath + "\\" + item.Id.ToString() + extension;
+
+                        if (usePngTransparent)
+                            targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Png);
+                        else
+                            targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Bmp);
+
+                        targetImg.Dispose();
+                        image.Dispose();
+                        exportedCount++;
                     }
+                    catch (Exception)
+                    {
+                        // Skip sprites that can't be loaded
+                        continue;
+                    }
+                }
+
+                if (exportedCount > 0)
+                {
+                    StatusBar.MessageQueue?.Enqueue($"Successfully exported {exportedCount} sprite(s) as {(usePngTransparent ? "PNG" : "BMP")}.", null, null, null, false, true, TimeSpan.FromSeconds(2));
                 }
             }
         }
