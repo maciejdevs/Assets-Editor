@@ -1451,94 +1451,242 @@ namespace Assets_Editor
         {
             ExportFormatDialogHost.IsOpen = false;
 
-            bool isSprite = ExportFormatDialogHost.Tag?.ToString() == "sprite";
+            bool isObject = ExportFormatDialogHost.Tag?.ToString() == "object";
             bool usePngTransparent = ExportPngRadio.IsChecked == true;
-            string filter = usePngTransparent ? "Png Image (.png)|*.png" : "Bitmap Image (.bmp)|*.bmp";
-            string extension = usePngTransparent ? ".png" : ".bmp";
+            bool usePak = ExportPakRadio.IsChecked == true;
 
-            SaveFileDialog saveFileDialog = new()
+            if (isObject)
             {
-                Filter = filter,
-                FileName = " ",
-                ClientGuid = Globals.GUID_LegacyDatEditor1
-            };
+                // Export objects/items
+                List<ShowList> selectedItems = ObjListView.SelectedItems.Cast<ShowList>().ToList();
+                if (!selectedItems.Any())
+                    return;
 
-            if (saveFileDialog.ShowDialog() == true)
-            {
-                string directoryPath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);
-                int exportedCount = 0;
-
-                if (isSprite)
+                if (usePak)
                 {
-                    // Export sprites
-                    List<ShowList> selectedItems = SprListView.SelectedItems.Cast<ShowList>().ToList();
-                    foreach (var item in selectedItems)
+                    // PAK export for objects
+                    SaveFileDialog saveFileDialog = new()
                     {
-                        try
+                        Filter = "PAK Archive (.pak)|*.pak",
+                        FileName = "items.pak",
+                        ClientGuid = Globals.GUID_LegacyDatEditor1
+                    };
+
+                    if (saveFileDialog.ShowDialog() == true)
+                    {
+                        List<ItemPakWriter.PakEntry> pakEntries = new();
+                        int exportedCount = 0;
+
+                        foreach (var item in selectedItems)
                         {
-                            System.Drawing.Image image = System.Drawing.Image.FromStream(MainWindow.MainSprStorage.getSpriteStream(item.Id));
-                            System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                            System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg);
+                            try
+                            {
+                                Appearance appearance = null;
+                                if (ObjectMenu.SelectedIndex == 0)
+                                    appearance = MainWindow.appearances.Outfit[(int)item.Id - 1];
+                                else if (ObjectMenu.SelectedIndex == 1)
+                                    appearance = MainWindow.appearances.Object[(int)item.Id - 100];
+                                else if (ObjectMenu.SelectedIndex == 2)
+                                    appearance = MainWindow.appearances.Effect[(int)item.Id - 1];
+                                else if (ObjectMenu.SelectedIndex == 3)
+                                    appearance = MainWindow.appearances.Missile[(int)item.Id - 1];
 
-                            if (!usePngTransparent)
-                                g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
+                                if (appearance != null)
+                                {
+                                    System.Drawing.Bitmap renderedBitmap = RenderObjectAppearance(appearance);
 
-                            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                            g.DrawImage(image, new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), System.Drawing.GraphicsUnit.Pixel);
-                            g.Dispose();
+                                    // Convert to PNG bytes
+                                    using MemoryStream ms = new();
+                                    renderedBitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
 
-                            string outputPath = directoryPath + "\\" + item.Id.ToString() + extension;
+                                    pakEntries.Add(new ItemPakWriter.PakEntry
+                                    {
+                                        ItemId = item.Id,
+                                        ImageData = ms.ToArray()
+                                    });
 
-                            if (usePngTransparent)
-                                targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Png);
-                            else
-                                targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Bmp);
-
-                            targetImg.Dispose();
-                            image.Dispose();
-                            exportedCount++;
+                                    renderedBitmap.Dispose();
+                                    exportedCount++;
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                continue;
+                            }
                         }
-                        catch (Exception)
+
+                        if (pakEntries.Any())
                         {
-                            continue;
+                            ItemPakWriter.WritePakFile(saveFileDialog.FileName, pakEntries);
+                            StatusBar.MessageQueue?.Enqueue($"Successfully exported {exportedCount} item(s) to PAK archive.", null, null, null, false, true, TimeSpan.FromSeconds(2));
                         }
                     }
-                    StatusBar.MessageQueue?.Enqueue($"Successfully exported {exportedCount} sprite(s) as {(usePngTransparent ? "PNG" : "BMP")}.", null, null, null, false, true, TimeSpan.FromSeconds(2));
                 }
                 else
                 {
-                    // Export objects
-                    List<ShowList> selectedItems = ObjListView.SelectedItems.Cast<ShowList>().ToList();
-                    foreach (var item in selectedItems)
+                    // PNG/BMP export for objects
+                    string filter = usePngTransparent ? "Png Image (.png)|*.png" : "Bitmap Image (.bmp)|*.bmp";
+                    string extension = usePngTransparent ? ".png" : ".bmp";
+
+                    SaveFileDialog saveFileDialog = new()
                     {
-                        try
+                        Filter = filter,
+                        FileName = " ",
+                        ClientGuid = Globals.GUID_LegacyDatEditor1
+                    };
+
+                    if (saveFileDialog.ShowDialog() == true)
+                    {
+                        string directoryPath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);
+                        int exportedCount = 0;
+
+                        foreach (var item in selectedItems)
                         {
-                            Appearance appearance = null;
-                            uint objectId = item.Id;
-
-                            if (ObjectMenu.SelectedIndex == 0)
-                                appearance = MainWindow.appearances.Outfit[(int)item.Id - 1];
-                            else if (ObjectMenu.SelectedIndex == 1)
-                                appearance = MainWindow.appearances.Object[(int)item.Id - 100];
-                            else if (ObjectMenu.SelectedIndex == 2)
-                                appearance = MainWindow.appearances.Effect[(int)item.Id - 1];
-                            else if (ObjectMenu.SelectedIndex == 3)
-                                appearance = MainWindow.appearances.Missile[(int)item.Id - 1];
-
-                            if (appearance != null)
+                            try
                             {
-                                System.Drawing.Bitmap renderedBitmap = RenderObjectAppearance(appearance);
-                                System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(renderedBitmap.Width, renderedBitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                                Appearance appearance = null;
+                                if (ObjectMenu.SelectedIndex == 0)
+                                    appearance = MainWindow.appearances.Outfit[(int)item.Id - 1];
+                                else if (ObjectMenu.SelectedIndex == 1)
+                                    appearance = MainWindow.appearances.Object[(int)item.Id - 100];
+                                else if (ObjectMenu.SelectedIndex == 2)
+                                    appearance = MainWindow.appearances.Effect[(int)item.Id - 1];
+                                else if (ObjectMenu.SelectedIndex == 3)
+                                    appearance = MainWindow.appearances.Missile[(int)item.Id - 1];
+
+                                if (appearance != null)
+                                {
+                                    System.Drawing.Bitmap renderedBitmap = RenderObjectAppearance(appearance);
+                                    System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(renderedBitmap.Width, renderedBitmap.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+                                    using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg))
+                                    {
+                                        if (!usePngTransparent)
+                                            g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
+
+                                        g.DrawImage(renderedBitmap, 0, 0);
+                                    }
+
+                                    string outputPath = directoryPath + "\\" + item.Id.ToString() + extension;
+
+                                    if (usePngTransparent)
+                                        targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Png);
+                                    else
+                                        targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Bmp);
+
+                                    targetImg.Dispose();
+                                    renderedBitmap.Dispose();
+                                    exportedCount++;
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                continue;
+                            }
+                        }
+
+                        if (exportedCount > 0)
+                        {
+                            StatusBar.MessageQueue?.Enqueue($"Successfully exported {exportedCount} item(s) as {(usePngTransparent ? "PNG" : "BMP")}.", null, null, null, false, true, TimeSpan.FromSeconds(2));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Export sprites
+                List<ShowList> selectedItems = SprListView.SelectedItems.Cast<ShowList>().ToList();
+                if (!selectedItems.Any())
+                    return;
+
+                if (usePak)
+                {
+                    // PAK export - single file
+                    SaveFileDialog saveFileDialog = new()
+                    {
+                        Filter = "PAK Archive (.pak)|*.pak",
+                        FileName = "sprites.pak",
+                        ClientGuid = Globals.GUID_LegacyDatEditor1
+                    };
+
+                    if (saveFileDialog.ShowDialog() == true)
+                    {
+                        List<ItemPakWriter.PakEntry> pakEntries = new();
+                        int exportedCount = 0;
+
+                        foreach (var item in selectedItems)
+                        {
+                            try
+                            {
+                                System.Drawing.Image image = System.Drawing.Image.FromStream(MainWindow.MainSprStorage.getSpriteStream(item.Id));
+                                System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
                                 using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg))
                                 {
-                                    if (!usePngTransparent)
-                                        g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
-
-                                    g.DrawImage(renderedBitmap, 0, 0);
+                                    g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                                    g.DrawImage(image, new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), System.Drawing.GraphicsUnit.Pixel);
                                 }
 
-                                string outputPath = directoryPath + "\\" + objectId.ToString() + extension;
+                                // Convert to PNG bytes
+                                using MemoryStream ms = new();
+                                targetImg.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+
+                                pakEntries.Add(new ItemPakWriter.PakEntry
+                                {
+                                    ItemId = item.Id,
+                                    ImageData = ms.ToArray()
+                                });
+
+                                targetImg.Dispose();
+                                image.Dispose();
+                                exportedCount++;
+                            }
+                            catch (Exception)
+                            {
+                                continue;
+                            }
+                        }
+
+                        if (pakEntries.Any())
+                        {
+                            ItemPakWriter.WritePakFile(saveFileDialog.FileName, pakEntries);
+                            StatusBar.MessageQueue?.Enqueue($"Successfully exported {exportedCount} sprite(s) to PAK archive.", null, null, null, false, true, TimeSpan.FromSeconds(2));
+                        }
+                    }
+                }
+                else
+                {
+                    // Original PNG/BMP export logic
+                    string filter = usePngTransparent ? "Png Image (.png)|*.png" : "Bitmap Image (.bmp)|*.bmp";
+                    string extension = usePngTransparent ? ".png" : ".bmp";
+
+                    SaveFileDialog saveFileDialog = new()
+                    {
+                        Filter = filter,
+                        FileName = " ",
+                        ClientGuid = Globals.GUID_LegacyDatEditor1
+                    };
+
+                    if (saveFileDialog.ShowDialog() == true)
+                    {
+                        int exportedCount = 0;
+                        foreach (var item in selectedItems)
+                        {
+                            try
+                            {
+                                System.Drawing.Image image = System.Drawing.Image.FromStream(MainWindow.MainSprStorage.getSpriteStream(item.Id));
+                                System.Drawing.Bitmap targetImg = new System.Drawing.Bitmap(image.Width, image.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                                System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(targetImg);
+
+                                if (!usePngTransparent)
+                                    g.Clear(System.Drawing.Color.FromArgb(255, 255, 0, 255));
+
+                                g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                                g.DrawImage(image, new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), new System.Drawing.Rectangle(0, 0, targetImg.Width, targetImg.Height), System.Drawing.GraphicsUnit.Pixel);
+                                g.Dispose();
+
+                                string directoryPath = System.IO.Path.GetDirectoryName(saveFileDialog.FileName);
+                                string outputPath = directoryPath + "\\" + item.Id.ToString() + extension;
 
                                 if (usePngTransparent)
                                     targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Png);
@@ -1546,16 +1694,20 @@ namespace Assets_Editor
                                     targetImg.Save(outputPath, System.Drawing.Imaging.ImageFormat.Bmp);
 
                                 targetImg.Dispose();
-                                renderedBitmap.Dispose();
+                                image.Dispose();
                                 exportedCount++;
                             }
+                            catch (Exception)
+                            {
+                                continue;
+                            }
                         }
-                        catch (Exception)
+
+                        if (exportedCount > 0)
                         {
-                            continue;
+                            StatusBar.MessageQueue?.Enqueue($"Successfully exported {exportedCount} sprite(s) as {(usePngTransparent ? "PNG" : "BMP")}.", null, null, null, false, true, TimeSpan.FromSeconds(2));
                         }
                     }
-                    StatusBar.MessageQueue?.Enqueue($"Successfully exported {exportedCount} object(s) as {(usePngTransparent ? "PNG" : "BMP")}.", null, null, null, false, true, TimeSpan.FromSeconds(2));
                 }
             }
         }

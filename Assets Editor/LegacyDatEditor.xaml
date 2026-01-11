@@ -17,7 +17,7 @@
     <Grid x:Name="MainContent" HorizontalAlignment="Center" VerticalAlignment="Stretch" IsHitTestVisible="{Binding ElementName=ComppileDialogHost, Path=IsOpen, Mode=OneWay, Converter={StaticResource BooleanInverter}}">
         <materialDesign:DialogHost Grid.Row="1" x:Name="ExportFormatDialogHost" OverlayBackground="Gray" >
             <materialDesign:DialogHost.DialogContent>
-                <GroupBox Header="Export Format" Width="320">
+                <GroupBox Header="Export Format" Width="380">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -28,6 +28,7 @@
                         <StackPanel Grid.Row="1" Margin="10,0,10,10">
                             <RadioButton x:Name="ExportPngRadio" Content="PNG with transparent background" IsChecked="True" Margin="0,5"/>
                             <RadioButton x:Name="ExportBmpRadio" Content="BMP with pink background" Margin="0,5"/>
+                            <RadioButton x:Name="ExportPakRadio" Content="PAK archive (single file for batch loading)" Margin="0,5"/>
                         </StackPanel>
                         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Button Click="ExportFormatConfirm" Content="Export" Width="100" Margin="0,0,20,0"/>
